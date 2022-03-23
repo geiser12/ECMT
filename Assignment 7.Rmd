@@ -1,0 +1,19 @@
+---
+title: "Assignment 7"
+output: html_document
+date: '2022-03-23'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+First, I will insert the necessary libraries and the datasets.
+
+```{r message=FALSE, warning=FALSE}
+#load libraries
+library(tidyverse)
+library(ggplot2)
+
+#import the datasets
+```
