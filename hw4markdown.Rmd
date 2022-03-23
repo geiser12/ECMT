@@ -1,0 +1,56 @@
+---
+title: "hw4markdown"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+I am going to load in my libraries and then import data on the real GDP growth data from 1947 to present day(the longest sample available) via FRED.
+```{r}
+library(readxl)
+library(ggplot2)
+GDPC1_percentchange <- read_excel("C:/Econometrics/ECONOMETRICS 674/GDPC1-percentchange.xls", 
+    skip = 10)
+GDPC1_percentchange<- data.frame(GDPC1_percentchange)
+
+```
+After importing the data, I will plot with a line chart. 
+```{r}
+plot(GDPC1_percentchange, type = "l",
+     main="Real GDP Growth Data", xlab= "Date of Observation", ylab = "Percent Change of GDP per Quarter")
+
+```
+Another way to get this data and plot it is through the quantmod and Quandl packages, which will upload the data automatically. This is demonstrated below. 
+```{r}
+library(quantmod)
+library(Quandl)
+GDP_percentchange_quandl <- Quandl("FRED/GDPC1", start_date="1947-04-01", end_date="2021-10-01", transform = "rdiff", collapse = "quarterly")
+plot(GDP_percentchange_quandl, type = "l",
+     main="Real GDP Growth Data", xlab= "Date of Observation", ylab = "Percent Change of GDP per Quarter")
+
+```
+
+Now that I have constructed the same plot using three different methods(Excel, importing file into R, and Quandl), I can compare the three plots. These three plots look identical. Now I will find the mean and variance of the data. 
+```{r}
+mean1<-mean(GDPC1_percentchange$GDPC1_PCH)
+var1<-var(GDPC1_percentchange$GDPC1_PCH)
+```
+From this, it can be seen that the mean of the data is .7707 and the variance is 1.344. Now I will predict real GDP growth with its unconditional mean, which would be .7707. If I were to treat the GDP growth distribution as Normal, what would be the probability of real GDP growth being negative?
+```{r}
+sd1<- sqrt(var1)
+pnorm1<- pnorm(0, mean1, sd1)
+print(pnorm1)
+```
+
+This means that the probability of real GDP growth being negative is .2530 or 25.30%. In addition, the probability is 19% that real GDP growth will be below one standard deviation from the mean, which is shown by the code below.
+```{r}
+pnorm(mean1-sqrt(var1), mean1,var1)
+```
+
+I will now use the unconditional distribution under the assumption of Normality to construct the 70% and 95% prediction intervals around the mean.
+```{r}
+predint1<- qnorm(.95, mean = mean1, sd=sd1)
+predint2<- qnorm(.70, mean = mean1, sd=sd1)
+```
+The 95% prediction interval around the mean is 2.678 and the 70% prediction interval around the mean is 1.379. This means that 95% of the values will lie below 2.678 and 70% of the values will lie below 1.379.

@@ -1,0 +1,14 @@
+---
+title: "The Mean"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+In mathematics, the mean is one of the most common and useful ways in which numbers are pooled. The mean is extremely useful as it is able to "express a measurement across many dissimilar cases" as well as similar cases, as Adoplhe Quetelet proves through his research. However, before Quetelet proves this, Carl Gauss lays the foundation for Quetelet through his groundbreaking work on the normal distribution, which "implies both the errors cancel each other out and that the average is the best estimate of the quantity being measured." Building upon Gauss' research, Quetelet applies the average to dissimilar objects and in addition to calculating the mean in this revolutionary fashion, he also posits that each individual observation represents an instance of "naturally occurring error" in contrast to the average observation, which represents the Platonic ideal of reality. The research provided by Gauss and Quetelet, among others, proved to be immensely important, as it created the statistical study of social data, which has blossomed into the field of social science. 
+  
+There are some situations in which the mean might not be the measure that is most useful for decision-making. The ergodic switch refers to "the mistake of assuming that the properties of the group can be used to make predictions about the members of the group". An example of this would be if a business uses the average of consumer spending in order to target consumers. If the distribution is multimodal and there is not a significant group of customers that fall within the average, the mean was not useful for decision-making and in fact possibly harmed the company.
+  
+Overall, this article has helped clarify why the average is an incredibly important statistical concept. When it was discussed in class, I was uncertain as to why the average is such an important concept, as it seems straightforward, however, this article has helped clarify exactly what the average describes and how it can be used. 

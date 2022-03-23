@@ -1,0 +1,14 @@
+---
+title: "Economic Forecasting and the Goldberg Variations Summary"
+subtitle: https://www.wsj.com/articles/economic-forecasting-and-the-goldberg-variations-11641211381
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Justin Lahart, the author of this article, begins by drawing an analogy between year-ahead forecasting and Goldberg machines - meaning that there are many complex factors that need to perfectly coincide for year-ahead forecasts to be accurate. Throughout the article, multiple variables are referred to as being included in the year-ahead forecasts, including the unemployment rate, the inflation rate and the unemployment rate. The article then launches into a cursory glance at the 2021 predictions for such variables and then compare them to how those variables performed in 2021, making the point that forecasts are frequently wrong and are taken with a grain of salt. However, although it is important to attempt to forecast these variables as they give preliminary guidance for the year ahead, Lahart posits that it would be more helpful to focus on forecasting only a few months into the future and obtain a hopefully more accurate view of the economic welfare of the U.S. As the article does not itself predict any economic variables, there is no discussion of how certain variables are predicted and what the expected outcome will be.    
+
+
