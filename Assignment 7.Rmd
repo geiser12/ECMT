@@ -14,6 +14,56 @@ First, I will insert the necessary libraries and the datasets.
 #load libraries
 library(tidyverse)
 library(ggplot2)
+library(quantmod)
+library(Quandl)
 
-#import the datasets
+#read in the data from fred
+#first data set is the real GPD growth
+#second data set loaded in will be: 10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity
+Quandl.api_key("Bsjtos3Rumnys9NRFspt")
+macro_data <- Quandl(c("FRED/GDPC1"), start_date="1976-06-01", end_date="2021-12-31", collapse = "quarterly", transform = "rdiff")
+macro_data1 <- Quandl(c("FRED/T10Y2Y"), start_date="1976-06-01", end_date="2021-12-31", collapse = "quarterly")
+macro_data<-data.frame(macro_data)
+#delete NA rows
+macro_data1<- macro_data1[-c(182, 183),]
+
+GDP1<- macro_data %>% select(
+  Date, Value
+)
+yield<- macro_data1 %>% select(
+  Date, Value
+)
+
+#plot GDP and the yield
+GDP_graph<-ggplot()+
+  geom_line(data = GDP1, aes(x = Date, y = Value))+
+  theme_classic()
+
+print(GDP_graph)
+
+yield_graph<-ggplot()+
+  geom_line(data = yield, aes(x = Date, y = Value))+
+  theme_classic()
+
+print(yield_graph)
 ```
+After I have plotted the GDP and the yield curve, I can create a simple regression model and summarize the output.
+```{r}
+#combine the two dataframes before analysis
+macro_data$yield <- macro_data1$Value
+fullmodel <- lm(Value~yield, data = macro_data)
+summary(fullmodel)
+```
+Now, I will examine the in-sample fit.
+```{r}
+fit=ts(fullmodel$fitted.values)
+fit<- data.frame(fit)
+GDP1$fit <- fit
+GDP1$fit<- unlist(GDP1$fit)
+
+in_sample_plot <- ggplot()+
+  geom_line(data = GDP1, aes(x= Date, y = fit), color = 'red')+
+  geom_line(data = GDP1, aes(x = Date, y = Value), color = 'blue')
+print(in_sample_plot)
+```
+
