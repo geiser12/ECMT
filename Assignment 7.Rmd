@@ -1,6 +1,8 @@
 ---
 title: "Assignment 7"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: '2022-03-23'
 ---
 
@@ -48,14 +50,14 @@ yield_graph<-ggplot()+
 print(yield_graph)
 ```
 After I have plotted the GDP and the yield curve, I can create a simple regression model and summarize the output.
-```{r}
+```{r message=FALSE, warning=FALSE}
 #combine the two dataframes before analysis
 macro_data$yield <- macro_data1$Value
 fullmodel <- lm(Value~yield, data = macro_data)
 summary(fullmodel)
 ```
 Now, I will examine the in-sample fit.
-```{r}
+```{r message=FALSE, warning=FALSE}
 fit=ts(fullmodel$fitted.values)
 fit<- data.frame(fit)
 GDP1$fit <- fit
