@@ -24,10 +24,11 @@ library(Quandl)
 #second data set loaded in will be: 10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity
 Quandl.api_key("Bsjtos3Rumnys9NRFspt")
 macro_data <- Quandl(c("FRED/GDPC1"), start_date="1976-06-01", end_date="2021-12-31", collapse = "quarterly", transform = "rdiff")
-macro_data1 <- Quandl(c("FRED/T10Y2YM"), start_date="1976-06-01", end_date="2022-01-01", collapse = "quarterly", transform = "rdiff")
+macro_data1 <- Quandl(c("FRED/T10Y2Y"), start_date="1976-06-01", end_date="2022-01-01", collapse = "quarterly", transform = "rdiff")
 macro_data<-data.frame(macro_data)
+macro_data1<-data.frame(macro_data1)
 #delete NA rows
-macro_data1<- macro_data1[-c(1,183),]
+#macro_data1<- macro_data1[-c(132),]
 
 GDP1<- macro_data %>% select(
   Date, Value
@@ -52,8 +53,10 @@ print(yield_graph)
 After I have plotted the GDP and the yield curve, I can create a simple regression model and summarize the output.
 ```{r message=FALSE, warning=FALSE}
 #combine the two dataframes before analysis
-macro_data$yield <- macro_data1$Value
-fullmodel <- lm(Value~yield, data = macro_data)
+
+diff_int_spread<- diff(as.numeric(unlist(yield$Value)))
+macro_data$lagged<- diff_int_spread
+fullmodel <- lm(Value~lagged, data = macro_data)
 summary(fullmodel)
 ```
 Now, I will examine the in-sample fit.
