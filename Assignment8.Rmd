@@ -8,23 +8,54 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+First, I need to load in the necessary libraries and the data.
 
-## R Markdown
+```{r message=FALSE, warning=FALSE}
+#load libraries
+library(tidyverse)
+library(ggplot2)
+library(quantmod)
+library(Quandl)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+#read in the data from fred
+#first data set is the real GPD growth
+#second data set loaded in will be:
+#10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity
+Quandl.api_key("Bsjtos3Rumnys9NRFspt")
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+#import the dataset
+hw7 <- Quandl(c('FRED/GDPC1','FRED/T10Y2Y'), collapse='quarterly', type="xts")
 
-```{r cars}
-summary(cars)
+# Rename the variables
+names(hw7)[1] <- "rgdp"
+names(hw7)[2] <- "spread"
+sum(with(hw7, is.na(rgdp)))
+sum(with(hw7, is.na(spread)))
+hw7 <- na.omit(hw7)  # 1976 Q2 ~ 2021 Q3
+
+# Simple definition of growth rate vs. log-difference approximation
+ld_rgdp <- na.exclude(diff(log(hw7$rgdp))  * 100)
+T = dim(hw7)[1]
+spread <- hw7[2:T,2]
+
+#create the subsample
+sub_sample_reg <- lm(window(ld_rgdp, end = "2011-12-31") ~ window(spread,end = "2011-12-31"))
+summary(sub_sample_reg)
+sub_sample_mean <- lm(window(ld_rgdp, end = "2011-12-31") ~ 1)
 ```
+create a direct prediction model. modify from q4 onwards - do everything up to q4 the same. modify line 157 for the lead and lag values - same line from above copied down. output is one period ahead of the spread. so change the gdp of the dataset to one period later at the beginning and the spread is one period before on the ending values. then use line 162 to actually predict. this is for the second equation on the homework. do over for h=4 and h=8
+```{r}
+#create equation 2
+oos_predict_1s = sub_sample_reg$coef[1] + sub_sample_reg$coef[2]*window(spread, start = "2012-01-31", end = "2019-12-31")
+oos_predict_2s = sub_sample_mean$coef[1] + 0*window(spread, start = "2011-12-31", end = "2019-09-30")
 
-## Including Plots
+index(oos_predict_1s) = index(oos_predict_2s)
 
-You can also embed plots, for example:
+realization_s = window(ld_rgdp, start = "2012-01-31", end = "2019-12-31")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+fe1 = realization_s-oos_predict_1s
+fe2 = realization_s-oos_predict_2s
+
+MSFE = c(mean(fe1^2), mean(fe2^2))
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+equation 1
