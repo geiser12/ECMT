@@ -1,5 +1,5 @@
 ---
-title: "Assignment 8"
+title: "Assignment 8 by Ben Geiser"
 output:
   pdf_document: default
   html_document: default
@@ -9,8 +9,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 First, I need to load in the necessary libraries and the data.
-
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 rm(list = ls())
 
 #load libraries
@@ -20,6 +19,7 @@ library(quantmod)
 library(Quandl)
 library(sandwich)
 library(lmtest)
+library(forecast)
 
 #read in the data from fred
 #first data set is the real GPD growth
@@ -44,53 +44,125 @@ ld_rgdp <- na.exclude(diff(log(hw8$rgdp))  * 100)
 T = dim(hw8)[1]
 spread <- hw8[2:T,2]
 
-#create the subsample
-sub_sample_reg <- lm(window(ld_rgdp, end = "2011-12-31") ~ window(spread,end = "2011-12-31"))
-summary(sub_sample_reg)
-sub_sample_mean <- lm(window(ld_rgdp, end = "2011-12-31") ~ 1)
 ```
-create a direct prediction model. modify from q4 onwards - do everything up to q4 the same. modify line 157 for the lead and lag values - same line from above copied down. output is one period ahead of the spread. so change the gdp of the dataset to one period later at the beginning and the spread is one period before on the ending values. then use line 162 to actually predict. this is for the second equation on the homework. do over for h=4 and h=8
+Now I create the actual models that I will be able to analyze in the homework questions.
 ```{r}
-#create equation 2 for h=1
-oos_predict_1s = sub_sample_reg$coef[1] + sub_sample_reg$coef[2]*window(spread, start = "2012-01-31", end = "2019-12-31")
-oos_predict_2s = sub_sample_mean$coef[1] + 0*window(spread, start = "2011-12-31", end = "2019-09-30")
-
-index(oos_predict_1s) = index(oos_predict_2s)
-
-realization_s = window(ld_rgdp, start = "2012-01-31", end = "2019-12-31")
-
-fe1 = realization_s-oos_predict_1s
-fe2 = realization_s-oos_predict_2s
-
-MSFE = c(mean(fe1^2), mean(fe2^2))
-```
-equation 1
-```{r}
-#create a loop to check with equation 2
-#for (h in c(1,4,8)){
- # reg = lm(m2_ld_rgdp[(h+1):T2,]-m2_spread[1:(T2-h)])
-  #cat('current forecasting horizon', h)
-  #print(summary(reg))
-#}
-
 #create the data that will be used for the loop
-m2_ld_rgdp1 = window(ld_rgdp, end = "2011-12-31")
+m2_ld_rgdp = window(ld_rgdp, end = "2011-12-31")
 m2_spread = window(spread, end = "2011-12-31")
-T2 = dim(m2_ld_rgdp1)[1]
-
+T2 = dim(m2_ld_rgdp)[1]
 
 #equation 1 loop
 for (h in c(1,4,8)){
-  csum_ld_rgdp = 0*m2_ld_rgdp1
+    csum_ld_rgdp = 0*m2_ld_rgdp
   for (i in (1:(T2-h))){
-    csum_ld_rgdp[i,] =sum(m2_ld_rgdp1[i:(i+h),])
+    csum_ld_rgdp[i,] =sum(m2_ld_rgdp[(i+1):(i+h),])
   }
-  cat("Current Forecsting horizon: ", h)
-  print(head(m2_ld_rgdp1,10))
-  print(head(csum_ld_rgdp,10))
-  reg = lm(csum_ld_rgdp[1:(t=T2-h),]/h~m2_spread[1:(T2-h),])
+  cat("Current forecasting horizon: ", h)
+  print(cbind(head(m2_ld_rgdp,10),head(csum_ld_rgdp,10)))
+  reg = lm(csum_ld_rgdp[1:(T2-h),]/h~m2_spread[1:(T2-h),])
   print(summary(reg))
-  print(coeftest(reg, vcov. = NeweyWest(reg, lag = round(0.75*T2^(1/3)))))
+  print(coeftest(reg,vcov. = NeweyWest(reg, lag = round(0.75*T2^(1/3)))))
+  cat("MSFE for: ", h)
+  print(mean(csum_ld_rgdp[1:(T2-h),]/h-predict(reg)^2))
+}
+
+#create a loop to compute equation 2
+for (h in c(1,4,8)){
+  reg = lm(m2_ld_rgdp[(1+h):T2,]~m2_spread[1:(T2-h)])
+  cat("Current forecasting horizon: ", h)
+  print(summary(reg))
+  print(cbind(head(m2_ld_rgdp[(1+h):T2,],10),head(m2_spread[1:(T2-h),],10)))
+  cat("MSFE for: ", h)
+  print(mean(m2_ld_rgdp[(1+h):T2,]-predict(reg)^2))
 }
 ```
+Now that the coding has been done, we can answer the homework questions.
+
+1.) These models perform significantly better than the models in the previous homework. This can be seen because the MSFE for the subsample in the previous homework was 3.98, whereas the MSFE for the regressions in this homework are much lower, meaning that the predicted values are much closer than the observed values.
+
+2.) The MSFEs for the models in equations 1 and 2 and all the forecasting horizons are as follows:
+Equation 1:
+h=1:0.2068853
+h=4:0.2037552
+h=8:0.1974337
+
+Equation 2:
+h=1:0.2068853
+h=4:0.2115289
+h=8:0.2057923
+
+As can be seen above, equation 1 where the forecasting horizon = 8 is the best model because the MSFE is the lowest, meaning the predicted values are the closest to the actual values in this model.
+
+3.) In order to see if COVID impacts the models, I will have to include COVID in the time frame and then rerun the models to see if the rankings change.
+```{r}
+#create the data that will be used for the loop
+m2_ld_rgdp = window(ld_rgdp, end = "2022-04-13")
+m2_spread = window(spread, end = "2022-04-13")
+T2 = dim(m2_ld_rgdp)[1]
+
+#equation 1 loop
+for (h in c(1,4,8)){
+    csum_ld_rgdp = 0*m2_ld_rgdp
+  for (i in (1:(T2-h))){
+    csum_ld_rgdp[i,] =sum(m2_ld_rgdp[(i+1):(i+h),])
+  }
+  cat("Current forecasting horizon: ", h)
+  print(cbind(head(m2_ld_rgdp,10),head(csum_ld_rgdp,10)))
+  reg = lm(csum_ld_rgdp[1:(T2-h),]/h~m2_spread[1:(T2-h),])
+  print(summary(reg))
+  print(coeftest(reg,vcov. = NeweyWest(reg, lag = round(0.75*T2^(1/3)))))
+  cat("MSFE for: ", h)
+  print(mean(csum_ld_rgdp[1:(T2-h),]/h-predict(reg)^2))
+}
+
+#create a loop to compute equation 2
+for (h in c(1,4,8)){
+  reg = lm(m2_ld_rgdp[(1+h):T2,]~m2_spread[1:(T2-h)])
+  cat("Current forecasting horizon: ", h)
+  print(summary(reg))
+  print(cbind(head(m2_ld_rgdp[(1+h):T2,],10),head(m2_spread[1:(T2-h),],10)))
+  cat("MSFE for: ", h)
+  print(mean(m2_ld_rgdp[(1+h):T2,]-predict(reg)^2))
+}
+```
+Now I can view the MSFE for the models.
+Equation 1:
+h=1:0.2208257
+h=4:0.2204271
+h=8:0.223453
+
+Equation 2:
+h=1:0.2208257
+h=4:0.2250751
+h=8:0.227623
+
+So here with the inclusion of COVID, we can see that the MSFE for each model has changed a bit, but has it changed significantly for any?
+It can easily be seen that COVID, while changing the MSFE for each slightly, does not have a statistical impact on the MSFE.
+
+4.) the model constructed below will predict the next 3 quarters of 2022. Because the best model was equation 1, I used equation 1 and simply adapted the time frame and the periods (h).
+```{r}
+m2_ld_rgdp = window(ld_rgdp, start = "2011-12-31", end = "2022-04-13")
+m2_spread = window(spread, start = "2011-12-31", end = "2022-04-13")
+T2 = dim(m2_ld_rgdp)[1]
+
+
+
+for (h in c(3)){
+    csum_ld_rgdp = 0*m2_ld_rgdp
+  for (i in (1:(T2-h))){
+    csum_ld_rgdp[i,] =sum(m2_ld_rgdp[(i+1):(i+h),])
+  }
+  cat("Current forecasting horizon: ", h)
+  print(cbind(head(m2_ld_rgdp,10),head(csum_ld_rgdp,10)))
+  reg = lm(csum_ld_rgdp[1:(T2-h),]/h~m2_spread[1:(T2-h),])
+  print(summary(reg))
+  print(coeftest(reg,vcov. = NeweyWest(reg, lag = round(0.75*T2^(1/3)))))
+  cat("MSFE for: ", h)
+  print(mean(csum_ld_rgdp[1:(T2-h),]/h-predict(reg)^2))
+  
+}
+```
+According to my model, GDP growth should increase by .25762 percent in the next three quarters. I can also construct predictive intervals in order to see how certain my prediction is. 
+
 
